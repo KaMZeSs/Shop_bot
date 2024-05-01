@@ -158,7 +158,72 @@ def create_cart_keyboard(products, start, list_count):
     builder.row(*controls, width=2)
 
     builder.row(
-        InlineKeyboardButton(text='Оформить заказ', callback_data="place-an-order")
+        InlineKeyboardButton(text='Оформить заказ', callback_data="start-place-order")
     )
+
+    return builder
+
+def create_cart_product_keyboard(product_id, quantity):
+    builder = InlineKeyboardBuilder()
+
+    controls = []
+
+    if quantity > 1:
+        controls.append(
+            InlineKeyboardButton(text="Уменьшить на 1", callback_data=f"cart-prouduct_decrease_{product_id}")
+        )
+
+    controls.append(
+            InlineKeyboardButton(text="Увеличить на 1", callback_data=f"cart-prouduct_increase_{product_id}")
+        )
+    
+    builder.row(*controls, width=2)
+    
+    builder.row(
+            InlineKeyboardButton(text="Удалить товар из корзины", callback_data=f"cart-prouduct_remove_{product_id}")
+        )
+
+    builder.row(
+        InlineKeyboardButton(text='Назад', callback_data="cart-back")
+    )
+
+    return builder
+
+PICKUP_POINTS_LIST_SIZE = 6
+
+def create_pickup_points_order_keyboard(pickup_points, start, list_count):
+    builder = InlineKeyboardBuilder()
+
+    counter = start
+    for pickup_point in pickup_points:
+        button_text = f'{counter}'
+
+        builder.add(InlineKeyboardButton(
+            text=button_text,
+            callback_data=f"order-pickup-point_{pickup_point['id']}"
+        ))
+        counter += 1
+
+    builder.adjust(3)
+
+    controls = []
+
+    if start > 1:
+        prev_start = start - PICKUP_POINTS_LIST_SIZE
+        if prev_start < 1:
+            prev_start = 1
+
+        controls.append(
+            InlineKeyboardButton(text="Предыдущие", callback_data=f"order-pickup-points_{prev_start}")
+        )
+        
+    end = start + PICKUP_POINTS_LIST_SIZE - 1
+    if end < list_count:
+        next_start = start + PICKUP_POINTS_LIST_SIZE
+        controls.append(
+            InlineKeyboardButton(text="Следующие", callback_data=f"order-pickup-points_{next_start}")
+        )
+
+    builder.row(*controls, width=2)
 
     return builder

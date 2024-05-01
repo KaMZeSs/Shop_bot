@@ -53,6 +53,30 @@ async def get_cart_by_telegram_id(user_id, first, count):
             )
             return products
         
+async def get_cart_product_info(telegram_id, product_id):
+    pool = await get_db_pool()
+    async with pool.acquire() as conn:
+        async with conn.transaction():
+            product = await conn.fetchrow(
+                """
+                SELECT 
+                    ci.user_id,
+                    ci.product_id, 
+                    ci.quantity user_quantity,
+                    pr.name,
+                    pr.price,
+                    so.new_price,
+                    pr.quantity shop_quantity
+                FROM cart_items ci
+                JOIN products pr ON ci.product_id = pr.id
+                JOIN users us ON ci.user_id = us.id
+                LEFT JOIN special_offers so ON pr.id = so.product_id
+							                   AND LOCALTIMESTAMP BETWEEN so.start_datetime AND so.end_datetime
+                WHERE us.telegram_id = $1 AND pr.id = $2 
+                """, telegram_id, product_id
+            )
+            return product
+        
 async def get_cart_size(telegram_id):
     pool = await get_db_pool()
     async with pool.acquire() as conn:
@@ -67,37 +91,74 @@ async def get_cart_size(telegram_id):
             )
             return count
         
-async def increase_product_in_cart(user_id, product_id):
+async def increase_product_in_cart(telegram_id, product_id):
     pool = await get_db_pool()
     async with pool.acquire() as conn:
         async with conn.transaction():
             await conn.execute(
                 """
-                UPDATE cart_items
+                UPDATE cart_items ci
                 SET quantity = quantity + 1
-                WHERE user_id = $1 AND product_id = $2
-                """, user_id, product_id
+                WHERE user_id = (
+                    SELECT us.id
+                    FROM users us
+                    WHERE us.telegram_id = $1
+                )
+                AND product_id = $2;
+
+                """, telegram_id, product_id
             )
             
-async def decrease_product_in_cart(user_id, product_id):
+async def decrease_product_in_cart(telegram_id, product_id):
     pool = await get_db_pool()
     async with pool.acquire() as conn:
         async with conn.transaction():
             await conn.execute(
                 """
-                UPDATE cart_items
+                UPDATE cart_items ci
                 SET quantity = quantity - 1
-                WHERE user_id = $1 AND product_id = $2
-                """, user_id, product_id
+                WHERE user_id = (
+                    SELECT us.id
+                    FROM users us
+                    WHERE us.telegram_id = $1
+                )
+                AND product_id = $2;
+                """, telegram_id, product_id
             )
             
-async def delete_product_from_cart(user_id, product_id):
+async def delete_product_from_cart(telegram_id, product_id):
     pool = await get_db_pool()
     async with pool.acquire() as conn:
         async with conn.transaction():
             await conn.execute(
                 """
-                DELETE FROM cart_items
-                WHERE user_id = $1 AND product_id = $2
-                """, user_id, product_id
+                DELETE FROM cart_items ci
+                WHERE user_id = (
+                    SELECT us.id
+                    FROM users us
+                    WHERE us.telegram_id = $1
+                )
+                AND ci.product_id = $2;
+                """, telegram_id, product_id
             )
+
+async def get_shortage_by_telegram_id(telegram_id):
+    pool = await get_db_pool()
+    async with pool.acquire() as conn:
+        async with conn.transaction():
+            products = await conn.fetch(
+                """
+                SELECT 
+                    ci.user_id,
+                    ci.product_id, 
+                    ci.quantity user_quantity,
+                    pr.name,
+                    pr.quantity shop_quantity
+                FROM cart_items ci
+                JOIN products pr ON ci.product_id = pr.id
+                JOIN users us ON ci.user_id = us.id
+                WHERE us.telegram_id = $1 AND ci.quantity > pr.quantity
+                ORDER BY product_id
+                """, telegram_id
+            )
+            return products
