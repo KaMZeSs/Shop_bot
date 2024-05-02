@@ -105,4 +105,54 @@ async def get_product_image(product_id):
                 product_id
             )
             return image_data
+        
+        # products = await conn.fetch(
+        #         """
+        #         SELECT
+        #             p.id,
+        #             p.name,
+        #             p.price,
+        #             so.new_price
+        #         FROM
+        #             products p
+        #         LEFT JOIN
+        #             special_offers so ON p.id = so.product_id
+        #                             AND LOCALTIMESTAMP BETWEEN so.start_datetime AND so.end_datetime
+        #         WHERE quantity != 0 AND name LIKE $1
+        #         ORDER BY similarity(name, $1) DESC
+        #         OFFSET $2 ROWS FETCH NEXT $3 ROWS ONLY
+        #         """, text, first-1, count
 
+def replace_spaces_with_text(input_string, text):
+    # Удаляем повторяющиеся пробелы
+    output_string = ' '.join(input_string.split())
+    
+    # Заменяем пробелы на ' & '
+    output_string = output_string.replace(' ', text)
+    
+    return output_string
+
+
+async def search_products_small(text, first, count):
+    # text = replace_spaces_with_text(text, ' & ')
+    pool = await get_db_pool()
+    async with pool.acquire() as conn:
+        async with conn.transaction():
+            products = await conn.fetch(
+                """
+                SELECT
+                    p.id,
+                    p.name,
+                    p.price,
+                    so.new_price
+                FROM
+                    products p
+                LEFT JOIN
+                    special_offers so ON p.id = so.product_id
+                                    AND LOCALTIMESTAMP BETWEEN so.start_datetime AND so.end_datetime
+                WHERE quantity != 0 AND to_tsvector(name) @@ to_tsquery(plainto_tsquery($1)::text)
+                ORDER BY ts_rank(to_tsvector(name), to_tsquery(plainto_tsquery($1)::text)) DESC
+                OFFSET $2 ROWS FETCH NEXT $3 ROWS ONLY
+                """, text, first-1, count
+            )
+            return products

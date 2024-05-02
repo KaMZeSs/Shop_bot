@@ -305,5 +305,3 @@ async def start_place_order(callback_query: types.CallbackQuery):
         
         await callback_query.message.reply(text, parse_mode=ParseMode.HTML)
         await callback_query.answer()
-
-    

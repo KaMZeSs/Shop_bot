@@ -1,16 +1,36 @@
-import textwrap
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton, InlineKeyboardButton
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
 
 CATEGORIES_LIST_SIZE = 10
 
-main = ReplyKeyboardMarkup(keyboard=[[KeyboardButton(text='Каталог'), KeyboardButton(text='Скидки')], 
-                                     [KeyboardButton(text='Корзина'), KeyboardButton(text='История заказов')], 
-                                     [KeyboardButton(text='Список пунктов выдачи')], 
-                                     [KeyboardButton(text='О нас'), KeyboardButton(text='Уведомления')]],
+main = ReplyKeyboardMarkup(keyboard=[[KeyboardButton(text='Товары'), KeyboardButton(text='Заказы')],
+                                     [KeyboardButton(text='Информация'), KeyboardButton(text='Уведомления')]],
                            resize_keyboard=True,
                            input_field_placeholder='Выберите пункт меню')
+
+
+catalog = ReplyKeyboardMarkup(keyboard=[[KeyboardButton(text='Каталог'), KeyboardButton(text='Скидки')],
+                                        [KeyboardButton(text='Поиск товара')],
+                                     [KeyboardButton(text='Корзина'), KeyboardButton(text='Назад')]],
+                           resize_keyboard=True,
+                           input_field_placeholder='Выберите пункт меню')
+
+orders = ReplyKeyboardMarkup(keyboard=[[KeyboardButton(text='Текущие заказы'), KeyboardButton(text='История заказов')],
+                                     [KeyboardButton(text='Назад')]],
+                           resize_keyboard=True,
+                           input_field_placeholder='Выберите пункт меню')
+
+info = ReplyKeyboardMarkup(keyboard=[[KeyboardButton(text='О нас'), KeyboardButton(text='Пункты выдачи')],
+                                     [KeyboardButton(text='Взаимодействие с ботом'), KeyboardButton(text='Назад')]],
+                           resize_keyboard=True,
+                           input_field_placeholder='Выберите пункт меню')
+
+search = ReplyKeyboardMarkup(keyboard=[[KeyboardButton(text='Отменить поиск')]],
+                           resize_keyboard=True,
+                           input_field_placeholder='Поисковый запрос..')
+
+# cделать многоуровневость и отдельную команду поиска
 
 def create_categories_keyboard(categories, start, list_count, spec = '_'):
     builder = InlineKeyboardBuilder()

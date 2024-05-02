@@ -1,4 +1,4 @@
-from aiogram import types
+from aiogram import F, types
 from aiogram.filters.command import Command
 
 from app.handlers.router import router
@@ -12,5 +12,10 @@ async def start_command(message: types.Message):
 
     await get_or_create_user(telegram_id, name) 
 
-    await message.reply(f"Здравствуйте, {name}! С помощью данного бота Вы можете совершать покупки в магазине КупиПК",
+    await message.answer(f"Здравствуйте, {name}! С помощью данного бота Вы можете совершать покупки в магазине КупиПК",
                         reply_markup=kb.main)
+    
+@router.message(F.text == 'Назад')
+async def products_keyboard_command(message: types.Message):
+    text = 'Выберите интересующий Вас пункт меню'
+    await message.answer(text, reply_markup=kb.main)
