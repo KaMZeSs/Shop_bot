@@ -51,11 +51,13 @@ async def process_products_so_pagination(callback_query: types.CallbackQuery):
     counter = 0
     for product in products:
         counter += 1
+        articul = product["id"]
         name = product["name"]
         price = product["price"]
         new_price = product["new_price"]
-        price_text = format_price(price, new_price)
-        product_text = f"{counter}. {name} - {price_text}\n"
+        discount = product["discount"]
+        price_text = format_price(price, new_price, discount)
+        product_text = f"{counter}. [{articul}] {name} - {price_text}\n"
         text += product_text
 
     keyboard = kb.create_products_keyboard(products, category_id, start, categories_count)
@@ -63,3 +65,4 @@ async def process_products_so_pagination(callback_query: types.CallbackQuery):
 
     await callback_query.message.edit_text(text, reply_markup=markup, parse_mode=ParseMode.HTML)
     await callback_query.answer()
+

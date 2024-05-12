@@ -23,12 +23,33 @@ async def main() -> None:
     dp = Dispatcher()
     dp.include_router(router)
     import_handlers()
+
     global db_pool
     db_pool = await get_db_pool()
+
     try:
+        # Создаем задачу для периодического вызова periodic_task
+        periodic_task = asyncio.create_task(periodic_task_wrapper(bot))
         await dp.start_polling(bot)
     finally:
         await close_db_pool()
+        # Отменяем задачу periodic_task_task
+        periodic_task.cancel()
+
+
+def run_periodic_task(bot):
+    asyncio.run(periodic_task_wrapper(bot))
+
+async def periodic_task_wrapper(bot: Bot):
+    while True:
+        await asyncio.sleep(60)
+        await periodic_task(bot)
+        
+
+async def periodic_task(bot: Bot):
+    # Ваш код функции здесь
+    print("Функция вызвана")
+
 
 
 if __name__ == "__main__":

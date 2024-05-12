@@ -139,7 +139,7 @@ def create_notification_settings_keyboard(user_info):
 
     return builder
 
-CART_LIST_SIZE = 3
+CART_LIST_SIZE = 4
 
 def create_cart_keyboard(products, start, list_count):
     builder = InlineKeyboardBuilder()
@@ -245,5 +245,76 @@ def create_pickup_points_order_keyboard(pickup_points, start, list_count):
         )
 
     builder.row(*controls, width=2)
+
+    return builder
+
+ORDERS_LIST_SIZE = 4
+
+def create_orders_keyboard(orders, start, list_count, is_current: bool):
+    builder = InlineKeyboardBuilder()
+
+    counter = start
+    for order in orders:
+        button_text = f'{counter}'
+
+        builder.add(InlineKeyboardButton(
+            text=button_text,
+            callback_data=f"order_{order['order_id']}"
+        ))
+        counter += 1
+
+    builder.adjust(2)
+
+    controls = []
+
+    if start > 1:
+        prev_start = start - ORDERS_LIST_SIZE
+        if prev_start < 1:
+            prev_start = 1
+
+        controls.append(
+            InlineKeyboardButton(text="Предыдущие", callback_data=f"orders_{'current' if is_current else 'history'}_{prev_start}")
+        )
+        
+    end = start + ORDERS_LIST_SIZE - 1
+    if end < list_count:
+        next_start = start + ORDERS_LIST_SIZE
+        controls.append(
+            InlineKeyboardButton(text="Следующие", callback_data=f"orders_{'current' if is_current else 'history'}_{next_start}")
+        )
+
+    builder.row(*controls, width=2)
+
+    return builder
+
+ORDER_ITEMS_LIST_SIZE = 8
+
+def create_order_items_keyboard(order_id, start, list_count, is_current: bool):
+    builder = InlineKeyboardBuilder()
+
+    controls = []
+
+    if start > 1:
+        prev_start = start - ORDER_ITEMS_LIST_SIZE
+        if prev_start < 1:
+            prev_start = 1
+
+        controls.append(
+            InlineKeyboardButton(text="Предыдущие", callback_data=f"order-items_{order_id}_{prev_start}")
+        )
+        
+    end = start + ORDER_ITEMS_LIST_SIZE - 1
+    if end < list_count:
+        next_start = start + ORDER_ITEMS_LIST_SIZE
+        controls.append(
+            InlineKeyboardButton(text="Следующие", callback_data=f"order-items_{order_id}_{next_start}")
+        )
+
+    builder.row(*controls, width=2)
+
+    if is_current:
+        builder.row(
+            InlineKeyboardButton(text="Отменить заказ", callback_data=f"order-cancel_{order_id}")
+        )
 
     return builder

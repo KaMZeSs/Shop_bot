@@ -1,12 +1,9 @@
 from aiogram import F, types
 from aiogram.filters import StateFilter
-from aiogram.filters.command import Command
 from aiogram.enums.parse_mode import ParseMode
 
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import StatesGroup, State
-
-
 
 import app.database.products_repository as prod
 
@@ -46,11 +43,13 @@ async def search(message: types.Message, state: FSMContext):
 
     counter = 1
     for product in products:
+        articul = product["id"]
         name = product["name"]
         price = product["price"]
         new_price = product["new_price"]
-        price_text = format_price(price, new_price)
-        product_text = f"<i>{counter}.</i> {name} - {price_text}\n\n"
+        discount = product["discount"]
+        price_text = format_price(price, new_price, discount)
+        product_text = f"<i>{counter}.</i> [{articul}] {name} - {price_text}\n\n"
         text += product_text
         counter += 1
 
