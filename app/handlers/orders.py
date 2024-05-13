@@ -40,6 +40,8 @@ async def products_keyboard_command(message: types.Message):
     for item in orders:
         pickup_point_address = item["pickup_point_address"]
         
+        id = item["order_id"]
+        
         try:
             status = item["status"]
             status = statuses[status]
@@ -51,13 +53,13 @@ async def products_keyboard_command(message: types.Message):
 
         total_price = item["total_price"]
         total_count = int(item["total_count"])
-        text += f'Заказ №{counter} от {formatted_dt}\nСтатус: {status}\nТоваров: {total_count} на {total_price}руб.\nПункт выдачи: {pickup_point_address}\n\n' 
+        text += f'Заказ №{counter} от {formatted_dt}\nИдентификатор: <b>{id}</b>\nСтатус: {status}\nТоваров: {total_count} на {total_price}руб.\nПункт выдачи: {pickup_point_address}\n\n' 
         counter += 1
 
     keyboard = kb.create_orders_keyboard(orders, 1, orders_count, True)
     markup = keyboard.as_markup()
 
-    await message.answer(text, reply_markup=markup)
+    await message.answer(text, reply_markup=markup, parse_mode=ParseMode.HTML)
 
 @router.callback_query(lambda c: c.data.startswith('orders_'))
 async def process_orders_pagination(callback_query: types.CallbackQuery):
@@ -84,6 +86,8 @@ async def process_orders_pagination(callback_query: types.CallbackQuery):
     for item in orders:
         pickup_point_address = item["pickup_point_address"]
         
+        id = item["order_id"]
+        
         try:
             status = item["status"]
             status = statuses[status]
@@ -95,13 +99,13 @@ async def process_orders_pagination(callback_query: types.CallbackQuery):
 
         total_price = item["total_price"]
         total_count = int(item["total_count"])
-        text += f'Заказ №{counter} от {formatted_dt}\nСтатус: {status}\nТоваров: {total_count} на {total_price}руб.\nПункт выдачи: {pickup_point_address}\n\n' 
+        text += f'Заказ №{counter} от {formatted_dt}\nИдентификатор: <b>{id}</b>\nСтатус: {status}\nТоваров: {total_count} на {total_price}руб.\nПункт выдачи: {pickup_point_address}\n\n' 
         counter += 1
 
     keyboard = kb.create_orders_keyboard(orders, start, orders_count, is_current)
     markup = keyboard.as_markup()
 
-    await callback_query.message.edit_text(text, reply_markup=markup)
+    await callback_query.message.edit_text(text, reply_markup=markup, parse_mode=ParseMode.HTML)
 
 @router.callback_query(lambda c: c.data.startswith('order_'))
 async def process_order_info(callback_query: types.CallbackQuery):
@@ -115,7 +119,7 @@ async def process_order_info(callback_query: types.CallbackQuery):
     order_items_count = await order.get_order_items_count(order_id)
     order_items_count = int(order_items_count['count'])
 
-    text = '' if is_history else 'Для отмены заказа нажмите на кнопку\n\n'
+    text = f'Заказ <b>{order_id}</b>\n\n' if is_history else f'Для отмены заказа <b>{order_id}</b> нажмите на кнопку\n\n'
 
     for product in order_items:
         articul = product["id"]
@@ -143,7 +147,7 @@ async def process_order_items_pagination(callback_query: types.CallbackQuery):
 
     order_items = await order.get_order_items(order_id, start, kb.ORDER_ITEMS_LIST_SIZE)
 
-    text = '' if is_history else 'Для отмены заказа нажмите на кнопку'
+    text = f'Заказ <b>{order_id}</b>\n\n' if is_history else f'Для отмены заказа <b>{order_id}</b> нажмите на кнопку\n\n'
 
     for product in order_items:
         articul = product["id"]
@@ -167,7 +171,7 @@ async def cancel_order(callback_query: types.CallbackQuery):
 
     await order.cancel_order(order_id)
 
-    await callback_query.message.edit_text('Заказ был отменен', parse_mode=ParseMode.HTML)
+    await callback_query.message.edit_text(f'Заказ {order_id} был отменен', parse_mode=ParseMode.HTML)
 
     
 
@@ -190,6 +194,8 @@ async def products_keyboard_command(message: types.Message):
     for item in orders:
         pickup_point_address = item["pickup_point_address"]
         
+        id = item["order_id"]
+        
         try:
             status = item["status"]
             status = statuses[status]
@@ -201,7 +207,7 @@ async def products_keyboard_command(message: types.Message):
 
         total_price = item["total_price"]
         total_count = int(item["total_count"])
-        text += f'Заказ №{counter} от {formatted_dt}\nСтатус: {status}\nТоваров: {total_count} на {total_price}руб.\nПункт выдачи: {pickup_point_address}\n\n' 
+        text += f'Заказ №{counter} от {formatted_dt}\nИдентификатор: <b>{id}</b>\nСтатус: {status}\nТоваров: {total_count} на {total_price}руб.\nПункт выдачи: {pickup_point_address}\n\n' 
         counter += 1
 
     keyboard = kb.create_orders_keyboard(orders, 1, orders_count, False)

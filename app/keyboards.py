@@ -17,7 +17,7 @@ catalog = ReplyKeyboardMarkup(keyboard=[[KeyboardButton(text='Каталог'), 
                            input_field_placeholder='Выберите пункт меню')
 
 orders = ReplyKeyboardMarkup(keyboard=[[KeyboardButton(text='Текущие заказы'), KeyboardButton(text='История заказов')],
-                                     [KeyboardButton(text='Назад')]],
+                                     [KeyboardButton(text='Ваш идентификатор'), KeyboardButton(text='Назад')]],
                            resize_keyboard=True,
                            input_field_placeholder='Выберите пункт меню')
 

@@ -4,6 +4,9 @@ import sys
 import dotenv
 
 from aiogram import Bot, Dispatcher
+from aiogram.enums.parse_mode import ParseMode
+from aiogram.client.bot import DefaultBotProperties
+
 
 from app.database.database import close_db_pool, get_db_pool, db_pool
 from app.handlers.router import router
@@ -19,7 +22,7 @@ def import_handlers():
 
 async def main() -> None:
     TOKEN = dotenv.dotenv_values()['API_KEY']
-    bot = Bot(TOKEN)
+    bot = Bot(TOKEN, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
     dp = Dispatcher()
     dp.include_router(router)
     import_handlers()
