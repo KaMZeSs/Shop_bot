@@ -31,13 +31,13 @@ async def search(message: types.Message, state: FSMContext):
 
     products = await prod.search_products_small(text, 1, kb.PRODUCTS_LIST_SIZE)
 
-    if len(products) == 0:
+    if products is None or len(products) == 0:
         text = 'По данному запросу не найдены товары'
-        await message.reply(text)
+        await message.answer(text)
         return
     
     text = "Выберите товар из результатов поиска:"
-    await message.reply(text, reply_markup=kb.catalog)
+    await message.answer(text, reply_markup=kb.catalog)
 
     text = ''
 

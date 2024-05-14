@@ -24,7 +24,7 @@ async def notification_settings_command(message: types.Message):
 
     markup = keyboard.as_markup()
 
-    await message.reply(text, reply_markup=markup, parse_mode=ParseMode.HTML)
+    await message.answer(text, reply_markup=markup, parse_mode=ParseMode.HTML)
 
 @router.callback_query(lambda c: c.data.startswith('notifications_'))
 async def process_notifications_settings_change(callback_query: types.CallbackQuery):

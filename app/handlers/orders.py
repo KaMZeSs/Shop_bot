@@ -31,7 +31,7 @@ async def products_keyboard_command(message: types.Message):
 
     if int(orders_count) == 0:
         text = 'У Вас нет текущих заказов'
-        await message.reply(text)
+        await message.answer(text)
         return
     
     text = 'Выберите интересующий Вас заказ\n\n'
@@ -185,7 +185,7 @@ async def products_keyboard_command(message: types.Message):
 
     if int(orders_count) == 0:
         text = 'У Вас нет заказов в истории'
-        await message.reply(text)
+        await message.answer(text)
         return
     
     text = 'Выберите интересующий Вас заказ\n\n'

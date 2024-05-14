@@ -13,6 +13,8 @@ import app.database.cart_repository as cart
 import app.database.orders_repository as order
 import app.database.pickup_points_repository as pick_point
 
+from aiogram.types import ReplyKeyboardMarkup, KeyboardButton, InlineKeyboardButton
+
 @router.callback_query(lambda c: c.data.startswith('add-to-cart_'))
 async def add_product_to_cart(callback_query: types.CallbackQuery):
     _, product_id = callback_query.data.split('_')
@@ -23,13 +25,33 @@ async def add_product_to_cart(callback_query: types.CallbackQuery):
     user_id = int(user_id['id'])
     
     try:
-        await cart.add_product_to_cart(product_id, user_id)
-        text = 'Товар успешно добавлен в корзину'
+        quantity = await cart.add_product_to_cart(product_id, user_id)
+        prev_text = callback_query.message.text.split('\n\nТоваров в корзине:')[0]
+        
+        markup = callback_query.message.reply_markup
+        
+        # # Создаем новую кнопку, которую хотим добавить
+        # new_buttons = [
+        #     InlineKeyboardButton(text="Удалить из корзины", callback_data=f"remove-from-cart-product-info_{product_id}")
+        # ]
+        
+        # last = markup.inline_keyboard.pop()
+        
+        
+        # markup.inline_keyboard.append([new_button])
+        # markup.inline_keyboard.append(last)
+        
+        await callback_query.message.edit_text(
+            text=prev_text + f'\n\nТоваров в корзине: {quantity}',
+            parse_mode= ParseMode.HTML,
+            reply_markup=markup
+        )
     except Exception:
-        text = 'Корзина достигла предела'
+        await callback_query.message.answer('Корзина достигла предела')
+        raise
 
     
-    await callback_query.message.reply(text)
+    
     await callback_query.answer()
 
 @router.message(F.text == 'Корзина')
@@ -40,11 +62,12 @@ async def catalog_command(message: types.Message):
 
     if int(products_count) == 0:
         text = 'Корзина пуста'
-        await message.reply(text)
+        await message.answer(text)
         return
 
-    text = 'В случае необходимости редактирования корзины выберите редактируемый товар:\n\n'
+    text = ' '
 
+    full_price = 0
     counter = 1
     for product in products:
         articul = product["id"]
@@ -54,18 +77,24 @@ async def catalog_command(message: types.Message):
         discount = product["discount"]
         user_quantity = int(product["user_quantity"])
         price_text = format_price(price, new_price, discount)
+        
         if not new_price:
+            full_price += price*user_quantity
             full_price_text = format_price(price*user_quantity, None, None)
         else:
+            full_price += new_price*user_quantity
             full_price_text = format_price(price*user_quantity, new_price*user_quantity, discount)
         
-        text += f'Товар №{counter}\nАртикул: {articul}\nНаименование: {name}\nСтоимость: {price_text}\nКоличество: {user_quantity}\nОбщая стоимость: {full_price_text}\n\n' 
+        text += ' '*8 + f'<i>Товар №{counter}</i>\n{name}\nСтоимость: {full_price_text} за <b>{user_quantity}</b> шт.\n' 
+        # text += f'Товар №{counter}\nАртикул: {articul}\nНаименование: {name}\nСтоимость: {price_text}\nКоличество: {user_quantity}\nОбщая стоимость: {full_price_text}\n\n' 
         counter += 1
 
+    text += f'\nОбщая стоимость корзины: <b>{full_price} руб.</b>\n\n'
+    
     keyboard = kb.create_cart_keyboard(products, 1, products_count)
     markup = keyboard.as_markup()
 
-    await message.reply(text, reply_markup=markup, parse_mode=ParseMode.HTML)
+    await message.answer(text, reply_markup=markup, parse_mode=ParseMode.HTML)
 
 @router.callback_query(lambda c: c.data.startswith('cart-proudcts_'))
 async def process_products_pagination(callback_query: types.CallbackQuery):
@@ -119,7 +148,7 @@ async def process_cart_products_selection(callback_query: types.CallbackQuery):
     product = await cart.get_cart_product_info(telegram_id, product_id)
 
     if product is None:
-        await callback_query.message.reply('Товара нет в корзине', parse_mode=ParseMode.HTML)
+        await callback_query.message.answer('Товара нет в корзине', parse_mode=ParseMode.HTML)
         await callback_query.answer()
         return
     
@@ -129,13 +158,14 @@ async def process_cart_products_selection(callback_query: types.CallbackQuery):
     new_price = product["new_price"]
     discount = product["discount"]
     user_quantity = int(product["user_quantity"])
+    shop_quantity = product['shop_quantity']
     price_text = format_price(price, new_price, discount)
     if not new_price:
         full_price_text = format_price(price*user_quantity, None, None)
     else:
         full_price_text = format_price(price*user_quantity, new_price*user_quantity, discount)
         
-    text = f'Артикул: {articul}\nНаименование: {name}\nСтоимость: {price_text}\nКоличество: {user_quantity}\nОбщая стоимость: {full_price_text}\n\n'
+    text = f'Артикул: {articul}\nНаименование: {name}\nСтоимость: {price_text}\nНа складе: {shop_quantity}\nВ корзине: {user_quantity}\nОбщая стоимость: {full_price_text}\n\n'
 
     keyboard = kb.create_cart_product_keyboard(product_id, user_quantity)
     markup = keyboard.as_markup()
@@ -159,34 +189,39 @@ async def process_cart_products_action(callback_query: types.CallbackQuery):
 
             if int(products_count) == 0:
                 text = 'Корзина пуста'
-                await callback_query.message.edit_text(text, parse_mode=ParseMode.HTML)
-                await callback_query.answer()
+                await callback_query.answer(text)
                 return
 
-            text = 'В случае необходимости редактирования корзины выберите редактируемый товар:\n\n'
+            text = ' '
 
+            full_price = 0
             counter = 1
             for product in products:
                 articul = product["id"]
                 name = product["name"]
                 price = product["price"]
-                discount = product["discount"]
                 new_price = product["new_price"]
+                discount = product["discount"]
                 user_quantity = int(product["user_quantity"])
                 price_text = format_price(price, new_price, discount)
+                
                 if not new_price:
+                    full_price += price*user_quantity
                     full_price_text = format_price(price*user_quantity, None, None)
                 else:
+                    full_price += new_price*user_quantity
                     full_price_text = format_price(price*user_quantity, new_price*user_quantity, discount)
                 
-                text += f'Товар №{counter}\nАртикул: {articul}\nНаименование: {name}\nСтоимость: {price_text}\nКоличество: {user_quantity}\nОбщая стоимость: {full_price_text}\n\n'
+                text += ' '*8 + f'<i>Товар №{counter}</i>\n{name}\nСтоимость: {full_price_text} за <b>{user_quantity}</b> шт.\n' 
+                # text += f'Товар №{counter}\nАртикул: {articul}\nНаименование: {name}\nСтоимость: {price_text}\nКоличество: {user_quantity}\nОбщая стоимость: {full_price_text}\n\n' 
                 counter += 1
 
+            text += f'\nОбщая стоимость корзины: <b>{full_price} руб.</b>\n\n'
+            
             keyboard = kb.create_cart_keyboard(products, 1, products_count)
             markup = keyboard.as_markup()
 
             await callback_query.message.edit_text(text, reply_markup=markup, parse_mode=ParseMode.HTML)
-            await callback_query.answer()
             return
 
         if action == 'increase':
@@ -195,28 +230,36 @@ async def process_cart_products_action(callback_query: types.CallbackQuery):
             await cart.decrease_product_in_cart(telegram_id, product_id)
 
         product = await cart.get_cart_product_info(telegram_id, product_id)
+
+        if product is None:
+            await callback_query.message.answer('Товара нет в корзине', parse_mode=ParseMode.HTML)
+            await callback_query.answer()
+            return
         
         articul = product["id"]
         name = product["name"]
         price = product["price"]
-        discount = product["discount"]
         new_price = product["new_price"]
+        discount = product["discount"]
         user_quantity = int(product["user_quantity"])
+        shop_quantity = product['shop_quantity']
         price_text = format_price(price, new_price, discount)
         if not new_price:
-            full_price_text = format_price(price*user_quantity, None, discount)
+            full_price_text = format_price(price*user_quantity, None, None)
         else:
             full_price_text = format_price(price*user_quantity, new_price*user_quantity, discount)
             
-        text = f'Артикул: {articul}\nНаименование: {name}\nСтоимость: {price_text}\nКоличество: {user_quantity}\nОбщая стоимость: {full_price_text}\n\n'
+        text = f'Артикул: {articul}\nНаименование: {name}\nСтоимость: {price_text}\nНа складе: {shop_quantity}\nВ корзине: {user_quantity}\nОбщая стоимость: {full_price_text}\n\n'
 
         keyboard = kb.create_cart_product_keyboard(product_id, user_quantity)
         markup = keyboard.as_markup()
 
         await callback_query.message.edit_text(text, reply_markup=markup, parse_mode=ParseMode.HTML)
         await callback_query.answer()
+
     except:
-        await callback_query.message.reply('Ошибка выполнения действия', parse_mode=ParseMode.HTML)
+        await callback_query.message.answer('Ошибка выполнения действия', parse_mode=ParseMode.HTML)
+        raise
         await callback_query.answer()
 
 @router.callback_query(lambda c: c.data.startswith('cart-back'))
@@ -224,38 +267,41 @@ async def process_cart_products_selection(callback_query: types.CallbackQuery):
     start = 1
 
     telegram_id = callback_query.from_user.id
-    products = await cart.get_cart_by_telegram_id(telegram_id, start, kb.CART_LIST_SIZE)
+    products = await cart.get_cart_by_telegram_id(telegram_id, 1, kb.CART_LIST_SIZE)
     products_count = (await cart.get_cart_size(telegram_id))['count']
 
     if int(products_count) == 0:
-            text = 'Корзина пуста'
-            await callback_query.message.edit_text(text, parse_mode=ParseMode.HTML)
-            await callback_query.answer()
-            return
+        text = 'Корзина пуста'
+        await message.answer(text)
+        return
 
-    text = 'В случае необходимости редактирования корзины выберите редактируемый товар:\n\n'
+    text = ' '
 
-    counter = start
+    full_price = 0
+    counter = 1
     for product in products:
         articul = product["id"]
         name = product["name"]
         price = product["price"]
-        discount = product["discount"]
         new_price = product["new_price"]
+        discount = product["discount"]
         user_quantity = int(product["user_quantity"])
         price_text = format_price(price, new_price, discount)
+        
         if not new_price:
+            full_price += price*user_quantity
             full_price_text = format_price(price*user_quantity, None, None)
         else:
+            full_price += new_price*user_quantity
             full_price_text = format_price(price*user_quantity, new_price*user_quantity, discount)
         
-        text += f'Товар №{counter}\nАртикул: {articul}\nНаименование: {name}\n\
-Стоимость: {price_text}\n\
-Количество: {user_quantity}\n\
-Общая стоимость: {full_price_text}\n\n' 
+        text += ' '*8 + f'<i>Товар №{counter}</i>\n{name}\nСтоимость: {full_price_text} за <b>{user_quantity}</b> шт.\n' 
+        # text += f'Товар №{counter}\nАртикул: {articul}\nНаименование: {name}\nСтоимость: {price_text}\nКоличество: {user_quantity}\nОбщая стоимость: {full_price_text}\n\n' 
         counter += 1
 
-    keyboard = kb.create_cart_keyboard(products, start, products_count)
+    text += f'\nОбщая стоимость корзины: <b>{full_price} руб.</b>\n\n'
+    
+    keyboard = kb.create_cart_keyboard(products, 1, products_count)
     markup = keyboard.as_markup()
 
     await callback_query.message.edit_text(text, reply_markup=markup, parse_mode=ParseMode.HTML)
@@ -303,7 +349,7 @@ async def start_place_order(callback_query: types.CallbackQuery):
 
         text += 'Пожалуйста, уменьшите количество товаров в заказе.\nПросим прощения за неудобства.'
         
-        await callback_query.message.reply(text, parse_mode=ParseMode.HTML)
+        await callback_query.message.answer(text, parse_mode=ParseMode.HTML)
         await callback_query.answer()
 
 @router.callback_query(lambda c: c.data.startswith('order-pickup-points_'))
@@ -347,12 +393,12 @@ async def end_place_order(callback_query: types.CallbackQuery):
     
     if not pickup_point_info:
         text = 'Выбранный Вами пункт выдачи не существует'
-        await callback_query.message.reply(text)
+        await callback_query.message.answer(text)
         await callback_query.answer()
         return
     if not bool(pickup_point_info['is_works']):
         text = 'Выбранный Вами пункт выдачи в данный момент не работает'
-        await callback_query.message.reply(text)
+        await callback_query.message.answer(text)
         await callback_query.answer()
         return
 
@@ -368,7 +414,7 @@ async def end_place_order(callback_query: types.CallbackQuery):
 
         text += 'Пожалуйста, уменьшите количество товаров в заказе.\nПросим прощения за неудобства.'
         
-        await callback_query.message.reply(text, parse_mode=ParseMode.HTML)
+        await callback_query.message.answer(text, parse_mode=ParseMode.HTML)
         await callback_query.answer()
         return
     try:

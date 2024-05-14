@@ -93,7 +93,7 @@ async def get_order_items(order_id, first, count):
                 JOIN products pr ON pr.id = oi.product_id
                 WHERE oi.order_id = $1
                 OFFSET $2 ROWS FETCH NEXT $3 ROWS ONLY;
-                """, order_id, first, count
+                """, order_id, first-1, count
             )
             return order_items
         

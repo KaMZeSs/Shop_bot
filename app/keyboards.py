@@ -68,7 +68,7 @@ def create_categories_keyboard(categories, start, list_count, spec = '_'):
 
 PRODUCTS_LIST_SIZE = 9
 
-def create_products_keyboard(products, category_id, start, list_count):
+def create_products_keyboard(products, category_id, start, list_count, is_so = ''):
     builder = InlineKeyboardBuilder()
 
     counter = start
@@ -77,7 +77,7 @@ def create_products_keyboard(products, category_id, start, list_count):
 
         builder.add(InlineKeyboardButton(
             text=button_text,
-            callback_data=f"product_{product['id']}"
+            callback_data=f"product{is_so}_{product['id']}_{start}_{category_id}"
         ))
         counter += 1
 
@@ -91,27 +91,31 @@ def create_products_keyboard(products, category_id, start, list_count):
             prev_start = 1
 
         controls.append(
-            InlineKeyboardButton(text="Предыдущие", callback_data=f"products_{category_id}_{prev_start}")
+            InlineKeyboardButton(text="Предыдущие", callback_data=f"products{is_so}_{category_id}_{prev_start}")
         )
         
     end = start + PRODUCTS_LIST_SIZE - 1
     if end < list_count:
         next_start = start + PRODUCTS_LIST_SIZE
         controls.append(
-            InlineKeyboardButton(text="Следующие", callback_data=f"products_{category_id}_{next_start}")
+            InlineKeyboardButton(text="Следующие", callback_data=f"products{is_so}_{category_id}_{next_start}")
         )
-
 
     builder.row(*controls, width=2)
 
     return builder
 
-def create_product_info_keyboard(product_id):
+def create_product_info_keyboard(product_id, category_id, start, photo_message_id, is_so = ''):
     builder = InlineKeyboardBuilder()
 
-    builder.add(InlineKeyboardButton(
+    builder.row(InlineKeyboardButton(
             text='Добавить в корзину',
             callback_data=f"add-to-cart_{product_id}"
+        ))
+    
+    builder.row(InlineKeyboardButton(
+            text='Назад',
+            callback_data=f"product-back{is_so}_{category_id}_{start}_{photo_message_id}"
         ))
 
     return builder
@@ -139,7 +143,7 @@ def create_notification_settings_keyboard(user_info):
 
     return builder
 
-CART_LIST_SIZE = 4
+CART_LIST_SIZE = 8
 
 def create_cart_keyboard(products, start, list_count):
     builder = InlineKeyboardBuilder()

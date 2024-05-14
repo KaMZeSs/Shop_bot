@@ -16,6 +16,7 @@ async def add_product_to_cart(product_id, user_id):
                     VALUES ($1, $2, 1)
                     """, user_id, product_id
                 )
+                return 1
             else:
                 await conn.execute(
                     """
@@ -24,6 +25,8 @@ async def add_product_to_cart(product_id, user_id):
                     WHERE user_id = $1 AND product_id = $2
                     """, user_id, product_id
                 )
+                return data['quantity'] + 1
+            
 
 async def get_cart_len_telegram_id(user_id):
     pool = await get_db_pool()
@@ -106,6 +109,20 @@ async def get_cart_size(telegram_id):
                 JOIN users us ON ci.user_id = us.id
                 WHERE us.telegram_id = $1;
                 """, telegram_id
+            )
+            return count
+        
+async def get_cart_product_info_small(telegram_id, product_id):
+    pool = await get_db_pool()
+    async with pool.acquire() as conn:
+        async with conn.transaction():
+            count = await conn.fetchrow(
+                """
+                SELECT *
+                FROM cart_items ci
+                JOIN users us ON ci.user_id = us.id
+                WHERE us.telegram_id = $1 AND ci.product_id = $2
+                """, telegram_id, product_id
             )
             return count
         

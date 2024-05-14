@@ -22,7 +22,7 @@ async def catalog_command(message: types.Message):
 
     markup = keyboard.as_markup()
 
-    await message.reply(text, reply_markup=markup, parse_mode=ParseMode.HTML)
+    await message.answer(text, reply_markup=markup, parse_mode=ParseMode.HTML)
 
 
 @router.callback_query(lambda c: c.data.startswith('categories_'))
