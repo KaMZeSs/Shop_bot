@@ -10,6 +10,7 @@ import app.database.cart_repository as cart
 import app.keyboards as kb
 
 from aiogram.types import BufferedInputFile
+from aiogram.utils.media_group import MediaGroupBuilder
 
 
 @router.message(F.text == 'Скидки')
@@ -79,7 +80,7 @@ async def view_product_info(callback_query: types.CallbackQuery):
     
     try:
         product_info = await prod.get_product_info(product_id)
-        product_image = await prod.get_product_image(product_id)
+        product_images = await prod.get_product_images(product_id)
 
         text = format_product_info(product_info)
         
@@ -87,24 +88,54 @@ async def view_product_info(callback_query: types.CallbackQuery):
         if product_in_cart is not None:
             text += f'\n\nТоваров в корзине: {product_in_cart['quantity']}'
 
-        if product_image is not None:
-            image_bytearray = product_image['image']
-            # Преобразование bytearray в bytes
-            image_bytes = bytes(image_bytearray)
+        try:
+            if len(product_images) != 0:
+                media = MediaGroupBuilder()
+                for image in product_images:
+                    try:
+                        image_bytearray = image['image']
+                        image_bytes = bytes(image_bytearray)
+                        photo = BufferedInputFile(image_bytes, filename='image.jpg')
+                        media.add_photo(photo)
+                    except:
+                        pass
 
-            # Создание InputFile из файлоподобного объекта
-            photo = BufferedInputFile(image_bytes, filename='image.jpg')
-
-            vs = await callback_query.message.answer_photo(photo)
-            keyboard = kb.create_product_info_keyboard(product_info['id'], category_id, prev_start, vs.message_id, '-so')
-            markup = keyboard.as_markup()
-            await callback_query.message.answer(text, reply_markup=markup, parse_mode=ParseMode.HTML)
-            await callback_query.bot.delete_message(callback_query.message.chat.id, callback_query.message.message_id)
-            
-        else:
+                vs = await callback_query.message.answer_media_group(media=media.build())
+                vs = vs[0]
+                
+                keyboard = kb.create_product_info_keyboard(product_info['id'], category_id, prev_start, vs.message_id, '-so')
+                markup = keyboard.as_markup()
+                await callback_query.message.answer(text, reply_markup=markup, parse_mode=ParseMode.HTML)
+                await callback_query.bot.delete_message(callback_query.message.chat.id, callback_query.message.message_id)
+            else:
+                keyboard = kb.create_product_info_keyboard(product_info['id'], category_id, prev_start, None, '-so')
+                markup = keyboard.as_markup()
+                await callback_query.message.edit_text(text, reply_markup=markup, parse_mode=ParseMode.HTML)
+        except:
             keyboard = kb.create_product_info_keyboard(product_info['id'], category_id, prev_start, None, '-so')
             markup = keyboard.as_markup()
             await callback_query.message.edit_text(text, reply_markup=markup, parse_mode=ParseMode.HTML)
+
+
+
+        # if product_image is not None:
+        #     image_bytearray = product_image['image']
+        #     # Преобразование bytearray в bytes
+        #     image_bytes = bytes(image_bytearray)
+
+        #     # Создание InputFile из файлоподобного объекта
+        #     photo = BufferedInputFile(image_bytes, filename='image.jpg')
+
+        #     vs = await callback_query.message.answer_photo(photo)
+        #     keyboard = kb.create_product_info_keyboard(product_info['id'], category_id, prev_start, vs.message_id, '-so')
+        #     markup = keyboard.as_markup()
+        #     await callback_query.message.answer(text, reply_markup=markup, parse_mode=ParseMode.HTML)
+        #     await callback_query.bot.delete_message(callback_query.message.chat.id, callback_query.message.message_id)
+            
+        # else:
+        #     keyboard = kb.create_product_info_keyboard(product_info['id'], category_id, prev_start, None, '-so')
+        #     markup = keyboard.as_markup()
+        #     await callback_query.message.edit_text(text, reply_markup=markup, parse_mode=ParseMode.HTML)
     except:
         await callback_query.message.answer("Данные о товаре не найдены", parse_mode=ParseMode.HTML)
         raise
@@ -136,12 +167,12 @@ async def products_back(callback_query: types.CallbackQuery):
         text += product_text
         counter += 1
 
-    keyboard = kb.create_products_keyboard(products, category_id, start, products_count)
+    keyboard = kb.create_products_keyboard(products, category_id, start, products_count, '-so')
     markup = keyboard.as_markup()
     
-    if photo_msg_id is not None:
-        await callback_query.bot.delete_message(callback_query.message.chat.id, photo_msg_id)
+    # if photo_msg_id is not None:
+    #     await callback_query.bot.delete_message(callback_query.message.chat.id, photo_msg_id)
 
-    await callback_query.message.edit_text(text, reply_markup=markup, parse_mode=ParseMode.HTML)
+    await callback_query.message.answer(text, reply_markup=markup, parse_mode=ParseMode.HTML)
     await callback_query.answer()
 

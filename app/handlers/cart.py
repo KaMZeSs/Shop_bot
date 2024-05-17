@@ -272,7 +272,7 @@ async def process_cart_products_selection(callback_query: types.CallbackQuery):
 
     if int(products_count) == 0:
         text = 'Корзина пуста'
-        await message.answer(text)
+        await callback_query.answer(text)
         return
 
     text = ' '

@@ -100,11 +100,11 @@ async def get_products_with_special_offers_count(category_id):
             return count
         
         
-async def get_product_image(product_id):
+async def get_product_images(product_id):
     pool = await get_db_pool()
     async with pool.acquire() as conn:
         async with conn.transaction():
-            image_data = await conn.fetchrow(
+            image_data = await conn.fetch(
                 "SELECT image FROM product_images WHERE product_id = $1;", 
                 product_id
             )
