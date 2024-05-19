@@ -77,7 +77,7 @@ async def process_orders_pagination(callback_query: types.CallbackQuery):
             text = 'У Вас нет текущих заказов'
         else:
             text = 'У Вас нет заказов в истории'
-        await callback_query.answer(text)
+        await callback_query.message.answer(text)
         return
     
     text = 'Выберите интересующий Вас заказ\n\n'

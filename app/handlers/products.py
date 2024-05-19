@@ -64,7 +64,7 @@ async def view_product_info(callback_query: types.CallbackQuery):
     _, product_id, prev_start, category_id = callback_query.data.split('_')
     product_id = int(product_id)
     prev_start = int(prev_start)
-    category_id = int(category_id)
+    category_id = int(category_id) if category_id != 'None' else None
     
     try:
         product_info = await prod.get_product_info(product_id)
@@ -89,12 +89,6 @@ async def view_product_info(callback_query: types.CallbackQuery):
 
                 vs = await callback_query.message.answer_media_group(media=media.build())
                 vs = vs[0]
-                
-                # image = product_images[0]
-                # image_bytearray = image['image']
-                # image_bytes = bytes(image_bytearray)
-                # photo = BufferedInputFile(image_bytes, filename='image.jpg')
-                # vs = await callback_query.message.answer_photo(photo=photo)
                 
                 keyboard = kb.create_product_info_keyboard(product_info['id'], category_id, prev_start, vs.message_id)
                 markup = keyboard.as_markup()

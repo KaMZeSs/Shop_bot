@@ -5,7 +5,7 @@ async def get_pickup_points(first, count):
     async with pool.acquire() as conn:
         async with conn.transaction():
             pickup_points = await conn.fetch(
-                "SELECT * FROM pickup_points WHERE is_works = True ORDER BY id OFFSET $1 ROWS FETCH NEXT $2 ROWS ONLY;", 
+                "SELECT * FROM pickup_points WHERE is_works = True AND is_receiving_orders = True ORDER BY id OFFSET $1 ROWS FETCH NEXT $2 ROWS ONLY;", 
                 first-1, count
             )
             return pickup_points
@@ -15,7 +15,7 @@ async def get_pickup_points_count():
     async with pool.acquire() as conn:
         async with conn.transaction():
             count = await conn.fetchrow(
-                "SELECT count(*) FROM pickup_points;"
+                "SELECT count(*) FROM pickup_points WHERE is_works = True AND is_receiving_orders = True;"
             )
             return count
 

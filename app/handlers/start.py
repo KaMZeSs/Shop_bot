@@ -8,7 +8,7 @@ import app.keyboards as kb
 @router.message(Command('start'))
 async def start_command(message: types.Message):
     telegram_id = message.from_user.id
-    name = message.from_user.first_name
+    name = message.from_user.full_name
 
     await get_or_create_user(telegram_id, name) 
 

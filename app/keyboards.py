@@ -113,10 +113,11 @@ def create_product_info_keyboard(product_id, category_id, start, photo_message_i
             callback_data=f"add-to-cart_{product_id}"
         ))
     
-    builder.row(InlineKeyboardButton(
-            text='Назад',
-            callback_data=f"product-back{is_so}_{category_id}_{start}_{photo_message_id}"
-        ))
+    if category_id is not None:
+        builder.row(InlineKeyboardButton(
+                text='Назад',
+                callback_data=f"product-back{is_so}_{category_id}_{start}_{photo_message_id}"
+            ))
 
     return builder
 
