@@ -30,28 +30,15 @@ async def add_product_to_cart(callback_query: types.CallbackQuery):
         
         markup = callback_query.message.reply_markup
         
-        # # Создаем новую кнопку, которую хотим добавить
-        # new_buttons = [
-        #     InlineKeyboardButton(text="Удалить из корзины", callback_data=f"remove-from-cart-product-info_{product_id}")
-        # ]
-        
-        # last = markup.inline_keyboard.pop()
-        
-        
-        # markup.inline_keyboard.append([new_button])
-        # markup.inline_keyboard.append(last)
-        
         await callback_query.message.edit_text(
             text=prev_text + f'\n\nТоваров в корзине: {quantity}',
-            parse_mode= ParseMode.HTML,
+            parse_mode=ParseMode.HTML,
             reply_markup=markup
         )
     except Exception:
         await callback_query.message.answer('Корзина достигла предела')
         raise
 
-    
-    
     await callback_query.answer()
 
 @router.message(F.text == 'Корзина')
@@ -259,7 +246,6 @@ async def process_cart_products_action(callback_query: types.CallbackQuery):
 
     except:
         await callback_query.message.answer('Ошибка выполнения действия', parse_mode=ParseMode.HTML)
-        raise
         await callback_query.answer()
 
 @router.callback_query(lambda c: c.data.startswith('cart-back'))
@@ -423,4 +409,10 @@ async def end_place_order(callback_query: types.CallbackQuery):
     except PostgresError as e:
         await callback_query.message.answer(f'Ошибка размещения заказа: {e}')
     
+    await callback_query.answer()
+    
+@router.callback_query(lambda c: c.data.startswith('cart-stop-order'))
+async def break_place_order(callback_query: types.CallbackQuery):
+    text = 'Создание заказа было отменено'
+    await callback_query.message.edit_text(text, parse_mode=ParseMode.HTML)
     await callback_query.answer()

@@ -28,3 +28,12 @@ async def get_point_info(id):
                 id
             )
             return pickup_point
+        
+async def get_all_pickup_points():
+    pool = await get_db_pool()
+    async with pool.acquire() as conn:
+        async with conn.transaction():
+            pickup_points = await conn.fetch(
+                "SELECT * FROM pickup_points WHERE is_works = True ORDER BY id;"
+            )
+            return pickup_points

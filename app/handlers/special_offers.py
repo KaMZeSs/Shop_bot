@@ -115,27 +115,7 @@ async def view_product_info(callback_query: types.CallbackQuery):
             keyboard = kb.create_product_info_keyboard(product_info['id'], category_id, prev_start, None, '-so')
             markup = keyboard.as_markup()
             await callback_query.message.edit_text(text, reply_markup=markup, parse_mode=ParseMode.HTML)
-
-
-
-        # if product_image is not None:
-        #     image_bytearray = product_image['image']
-        #     # Преобразование bytearray в bytes
-        #     image_bytes = bytes(image_bytearray)
-
-        #     # Создание InputFile из файлоподобного объекта
-        #     photo = BufferedInputFile(image_bytes, filename='image.jpg')
-
-        #     vs = await callback_query.message.answer_photo(photo)
-        #     keyboard = kb.create_product_info_keyboard(product_info['id'], category_id, prev_start, vs.message_id, '-so')
-        #     markup = keyboard.as_markup()
-        #     await callback_query.message.answer(text, reply_markup=markup, parse_mode=ParseMode.HTML)
-        #     await callback_query.bot.delete_message(callback_query.message.chat.id, callback_query.message.message_id)
             
-        # else:
-        #     keyboard = kb.create_product_info_keyboard(product_info['id'], category_id, prev_start, None, '-so')
-        #     markup = keyboard.as_markup()
-        #     await callback_query.message.edit_text(text, reply_markup=markup, parse_mode=ParseMode.HTML)
     except:
         await callback_query.message.answer("Данные о товаре не найдены", parse_mode=ParseMode.HTML)
         raise

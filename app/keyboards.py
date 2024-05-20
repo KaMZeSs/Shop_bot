@@ -30,8 +30,6 @@ search = ReplyKeyboardMarkup(keyboard=[[KeyboardButton(text='Отменить п
                            resize_keyboard=True,
                            input_field_placeholder='Поисковый запрос..')
 
-# cделать многоуровневость и отдельную команду поиска
-
 def create_categories_keyboard(categories, start, list_count, spec = '_'):
     builder = InlineKeyboardBuilder()
 
@@ -250,6 +248,10 @@ def create_pickup_points_order_keyboard(pickup_points, start, list_count):
         )
 
     builder.row(*controls, width=2)
+    
+    builder.row(
+        InlineKeyboardButton(text="Отменить оформление", callback_data=f"cart-stop-order")
+    )
 
     return builder
 
