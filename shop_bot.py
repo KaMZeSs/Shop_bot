@@ -8,6 +8,8 @@ from aiogram.enums.parse_mode import ParseMode
 from aiogram.client.bot import DefaultBotProperties
 
 
+from app.notifications.news import send_news
+from app.notifications.orders import send_order_notifications
 from app.database.database import close_db_pool, get_db_pool, db_pool
 from app.handlers.router import router
 
@@ -18,7 +20,7 @@ import app.handlers
 def import_handlers():
     package = app.handlers
     for _, modname, _ in pkgutil.iter_modules(package.__path__):
-        module = import_module(f"{package.__name__}.{modname}")
+        _ = import_module(f"{package.__name__}.{modname}")
 
 async def main() -> None:
     TOKEN = dotenv.dotenv_values()['API_KEY']
@@ -31,29 +33,24 @@ async def main() -> None:
     db_pool = await get_db_pool()
 
     try:
-        # Создаем задачу для периодического вызова periodic_task
-        periodic_task = asyncio.create_task(periodic_task_wrapper(bot))
+        news_task = asyncio.create_task(news_task_wrapper(bot))
+        order_notifications_task = asyncio.create_task(orders_task_wrapper(bot))
         await dp.start_polling(bot)
     finally:
         await close_db_pool()
-        # Отменяем задачу periodic_task_task
-        periodic_task.cancel()
+        news_task.cancel()
+        order_notifications_task.cancel()
 
 
-def run_periodic_task(bot):
-    asyncio.run(periodic_task_wrapper(bot))
-
-async def periodic_task_wrapper(bot: Bot):
+async def news_task_wrapper(bot: Bot):
     while True:
-        await asyncio.sleep(60)
-        await periodic_task(bot)
+        await asyncio.sleep(2)
+        await send_order_notifications(bot)
         
-
-async def periodic_task(bot: Bot):
-    # Ваш код функции здесь
-    print("Функция вызвана")
-
-
+async def orders_task_wrapper(bot: Bot):
+    while True:
+        await asyncio.sleep(2)
+        await send_news(bot)
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO, stream=sys.stdout)

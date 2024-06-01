@@ -4,6 +4,7 @@ from aiogram.filters.command import Command
 from app.handlers.router import router
 from app.database.users_repository import get_or_create_user
 import app.keyboards as kb
+from app.handlers.info import info_text
 
 @router.message(Command('start'))
 async def start_command(message: types.Message):
@@ -12,7 +13,7 @@ async def start_command(message: types.Message):
 
     await get_or_create_user(telegram_id, name) 
 
-    await message.answer(f"Здравствуйте, {name}! С помощью данного бота Вы можете совершать покупки в магазине КупиПК",
+    await message.answer(f"Здравствуйте, {name}!\n\n{info_text()}",
                         reply_markup=kb.main)
     
 @router.message(F.text == 'Назад')

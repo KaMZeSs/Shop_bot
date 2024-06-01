@@ -16,11 +16,19 @@ async def products_keyboard_command(message: types.Message):
     text = f'Ваш идентификатор: <b>{message.from_user.id}</b>'
     await message.answer(text, reply_markup=kb.info)
     
+def info_text():
+    text = '''Добро пожаловать в наш магазин электроники КупиПК! У нас вы найдете широкий ассортимент компьютерных комплектующих, периферийных устройств и других электронных товаров по привлекательным ценам.
+
+Для покупок и отслеживания заказов воспользуйтесь этим ботом. 
+
+Если вам требуется дополнительная информация о взаимодействии с ботом, нажмите на клавиатуре "Информация -> Взаимодействие с ботом", где вы найдете подробные инструкции.
+
+Мы стремимся предоставить вам наилучший сервис и качественные товары. Ждем ваших заказов!'''
+    return text
 
 @router.message(F.text == 'О нас')
 async def products_keyboard_command(message: types.Message):
-    text = 'Выберите интересующий Вас пункт меню'
-    await message.answer(text, reply_markup=kb.info)
+    await message.answer(info_text(), reply_markup=kb.info)
     
 @router.message(F.text == 'Взаимодействие с ботом')
 async def products_keyboard_command(message: types.Message):
