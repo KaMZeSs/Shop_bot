@@ -113,8 +113,6 @@ async def process_products_pagination(callback_query: types.CallbackQuery):
     _, category_id, start, photo_msg_id = callback_query.data.split('_')
     category_id = int(category_id)
     start = int(start)
-    if photo_msg_id is not None:
-        photo_msg_id = int(photo_msg_id)
 
     products = await prod.get_products_small(category_id, start, kb.PRODUCTS_LIST_SIZE)
     categories_count = (await prod.get_products_count(category_id))['count']
@@ -135,9 +133,6 @@ async def process_products_pagination(callback_query: types.CallbackQuery):
 
     keyboard = kb.create_products_keyboard(products, category_id, start, categories_count)
     markup = keyboard.as_markup()
-    
-    # if photo_msg_id is not None:
-    #     await callback_query.bot.delete_message(callback_query.message.chat.id, photo_msg_id)
 
     await callback_query.message.answer(text, reply_markup=markup, parse_mode=ParseMode.HTML)
     await callback_query.answer()

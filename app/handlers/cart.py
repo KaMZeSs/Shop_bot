@@ -37,7 +37,6 @@ async def add_product_to_cart(callback_query: types.CallbackQuery):
         )
     except Exception:
         await callback_query.message.answer('Корзина достигла предела')
-        raise
 
     await callback_query.answer()
 

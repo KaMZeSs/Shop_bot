@@ -16,7 +16,7 @@ class Search(StatesGroup):
     search_text_typing = State()
     
 @router.message(StateFilter(None), F.text == 'Поиск товара')
-async def cmd_food(message: types.Message, state: FSMContext):
+async def cmd_search(message: types.Message, state: FSMContext):
     await message.answer(text='Введите поисковый запрос:', reply_markup=kb.search)
     await state.set_state(Search.search_text_typing)
 
@@ -29,7 +29,7 @@ async def search_stop(message: types.Message, state: FSMContext):
 async def search(message: types.Message, state: FSMContext):
     text = message.text
 
-    products = await prod.search_products_small(text, 1, kb.PRODUCTS_LIST_SIZE)
+    products = await prod.search_products_small(text, kb.PRODUCTS_LIST_SIZE)
 
     if products is None or len(products) == 0:
         text = 'По данному запросу не найдены товары'

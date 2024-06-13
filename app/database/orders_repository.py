@@ -57,12 +57,12 @@ async def get_user_orders(telegram_id, is_current: bool, first, count):
                     pp.address AS pickup_point_address,
                     o.status,
                     o.order_timestamp,
-                    o_sum.total_price,
-                    o_sum.total_count
+                    coalesce(o_sum.total_price, 0) as total_price,
+                    coalesce(o_sum.total_count, 0) as total_count
                 FROM orders o
                 JOIN pickup_points pp ON o.pickup_point_id = pp.id
                 JOIN users us ON o.user_id = us.id
-                JOIN (
+                LEFT JOIN (
                     SELECT 
                         order_id,
                         count(*) as total_count,

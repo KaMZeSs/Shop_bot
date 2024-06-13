@@ -36,7 +36,11 @@ async def send_order_notifications(bot: Bot):
                 if is_accepts_notifications:
                     # Пользователь согласен на отправку уведомлений
                     status = item['status']
-                    status = statuses[status]
+                    try:
+                        status = statuses[status]
+                    except:
+                        pass
+                    
                     text = f'Заказ №<b>{order_id}</b>: <b>{status}</b>'
                     await bot.send_message(chat_id=telegram_id, text=text)
                     

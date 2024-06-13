@@ -7,7 +7,6 @@ from aiogram import Bot, Dispatcher
 from aiogram.enums.parse_mode import ParseMode
 from aiogram.client.bot import DefaultBotProperties
 
-
 from app.notifications.news import send_news
 from app.notifications.orders import send_order_notifications
 from app.database.database import close_db_pool, get_db_pool, db_pool

@@ -24,6 +24,8 @@ async def special_offers_command(message: types.Message):
             cur_text_part = part
         else:
             cur_text_part += part
+    if len(cur_text_part) > 0:
+        text_parts.append(cur_text_part)
 
     for part in text_parts:
         await message.answer(part, parse_mode=ParseMode.HTML)

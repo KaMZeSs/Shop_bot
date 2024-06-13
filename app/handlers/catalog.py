@@ -24,7 +24,6 @@ async def catalog_command(message: types.Message):
 
     await message.answer(text, reply_markup=markup, parse_mode=ParseMode.HTML)
 
-
 @router.callback_query(lambda c: c.data.startswith('categories_'))
 async def process_category_pagination(callback_query: types.CallbackQuery):
     _, start = callback_query.data.split('_')

@@ -111,61 +111,16 @@ async def get_product_images(product_id):
             return image_data
         
 def replace_spaces_with_text(input_string, text):
-    # Удаляем повторяющиеся пробелы
     output_string = ' '.join(input_string.split())
-    
-    # Заменяем пробелы на ' & '
     output_string = output_string.replace(' ', text)
-    
     return output_string
 
 
-async def search_products_small(text, first, count):
+async def search_products_small(text, count):
     text = replace_spaces_with_text(text, ' | ')
     pool = await get_db_pool()
     async with pool.acquire() as conn:
         async with conn.transaction():
-            # products = await conn.fetch(
-            #     """
-            #     SELECT
-            #         p.id,
-            #         p.name,
-            #         p.price,
-            #         so.discount,
-			# 		(p.price - p.price * so.discount / 100)::integer AS new_price
-            #     FROM
-            #         products p
-            #     LEFT JOIN
-            #         special_offers so ON p.id = so.product_id
-            #                         AND LOCALTIMESTAMP BETWEEN so.start_datetime AND so.end_datetime
-            #     WHERE quantity != 0 AND to_tsvector(name) @@ to_tsquery($1)
-            #     ORDER BY ts_rank(to_tsvector(name), to_tsquery($1)) DESC
-            #     OFFSET $2 ROWS FETCH NEXT $3 ROWS ONLY
-            #     """, text, first-1, count
-            # )
-            
-            # products = await conn.fetch(
-            #     """
-            #     SELECT
-            #         p.id,
-            #         p.name,
-            #         p.price,
-            #         so.discount,
-            #         (p.price - p.price * so.discount / 100)::integer AS new_price
-            #     FROM
-            #         products p
-            #     LEFT JOIN
-            #         special_offers so ON p.id = so.product_id
-            #                         AND LOCALTIMESTAMP BETWEEN so.start_datetime AND so.end_datetime
-            #     WHERE 
-            #         quantity != 0 
-            #         AND concat_ws(' ', p.name) ILIKE '%' || $1 || '%'
-            #     ORDER BY 
-            #         ts_rank(to_tsvector(concat_ws(' ', p.name)), to_tsquery($1)) DESC
-            #     OFFSET $2 ROWS FETCH NEXT $3 ROWS ONLY
-            #     """, text, first-1, count
-            # )
-            
             products = await conn.fetch(
                 """
                 SELECT
@@ -174,24 +129,23 @@ async def search_products_small(text, first, count):
                     p.price,
                     so.discount,
                     (p.price - p.price * so.discount / 100)::integer AS new_price,
-                    ts_rank_cd(to_tsvector(p.name), plainto_tsquery($1)) AS rank
+                    ts_rank_cd(to_tsvector(p.name), query) AS rank
                 FROM
-                    products p
+                    to_tsquery($1) query, products p
                 LEFT JOIN
                     special_offers so ON p.id = so.product_id
                                     AND LOCALTIMESTAMP BETWEEN so.start_datetime AND so.end_datetime
-                WHERE 
+                WHERE
+                    quantity != 0 AND 
                     (
-                        p.id::text = $1 OR
-                        p.id::text ILIKE '%' || $1 || '%' OR
-                        p.name ILIKE '%' || $1 || '%' OR
-                        to_tsvector(p.name) @@ plainto_tsquery($1)
+                        p.id::text = $1 OR 
+                        to_tsvector(p.name) @@ query OR
+                        p.name ILIKE '%' || $1 || '%'
                     )
-                    AND quantity != 0 
                 ORDER BY 
                     CASE WHEN p.id::text = $1 THEN 1 ELSE 2 END, rank DESC
-                OFFSET $2 ROWS FETCH NEXT $3 ROWS ONLY;
-                """, text, first-1, count
+                FETCH NEXT $2 ROWS ONLY;
+                """, text, count
             )
             
             return products

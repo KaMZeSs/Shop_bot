@@ -173,9 +173,6 @@ async def cancel_order(callback_query: types.CallbackQuery):
 
     await callback_query.message.edit_text(f'Заказ {order_id} был отменен', parse_mode=ParseMode.HTML)
 
-    
-
-
 @router.message(F.text == 'История заказов')
 async def products_keyboard_command(message: types.Message):
     telegram_id = message.from_user.id
